@@ -1,4 +1,7 @@
+import fs from 'fs';
+import util from 'util';
 import { TimeoutError } from 'puppeteer/Errors';
+
 import elements from './helpers/elements';
 
 const {
@@ -8,6 +11,8 @@ const {
   loginButton,
   postSelector,
   postFeedSelector,
+  argumentSelector,
+  groupPostDiv,
 } = elements;
 
 const focusSelector = async (page, element) => {
@@ -17,7 +22,7 @@ const focusSelector = async (page, element) => {
   } catch (e) {
     if (e instanceof TimeoutError) {
       await page.waitForSelector(element);
-      await page.evaluate('arguments[0].click()', element);
+      await page.evaluate(argumentSelector, element);
     } 
   }
   return page;
@@ -29,7 +34,7 @@ const writeForm = async (page, element, input) => {
   } catch (e) {
     if (e instanceof TimeoutError) {
       await page.waitForSelector(element);
-      await page.evaluate('arguments[0].click()', element);
+      await page.evaluate(argumentSelector, element);
       await page.type(element, input);
     }
   }
@@ -42,7 +47,7 @@ const clickButton = async (page, element) => {
   } catch (e) {
     if (e instanceof TimeoutError) {
       await page.waitForSelector(element);
-      await page.evaluate('arguments[0].click()', element);
+      await page.evaluate(argumentSelector, element);
       await page.click(element);
     }
   }
@@ -50,6 +55,7 @@ const clickButton = async (page, element) => {
 }
 
 const login = async (browser) => {
+  console.log('Logging you in under your credentials...')
   const page = browser.page;
   await page.goto(url, { waitUntil: 'load' });
 
@@ -60,10 +66,15 @@ const login = async (browser) => {
   
   await clickButton(page, loginButton);
   await page.waitForNavigation({ waitUntil: 'networkidle2' });
+  await page.screenshot({
+    path: 'login.png',
+    fullPage: true
+  });
   return browser;
 };
 
 const scrollToBottom = async (page) => {
+  console.log('Scrolling the facebook group...\n this might take a while!')
   const distance = 100; // should be less than or equal to window.innerHeight
   const delay = 100;
   while (await page.evaluate(() => document.scrollingElement.scrollTop + window.innerHeight < document.scrollingElement.scrollHeight)) {
@@ -74,8 +85,43 @@ const scrollToBottom = async (page) => {
   }
 };
 
+const openComments = async (page) => {
+  console.log('TODO')
+}
+
 const getPostData = async (page, groupIds) => {
-  return groupIds
+  const posts = groupIds.map(async id => {
+    if (typeof id === 'string') {
+      const selector = groupPostDiv(id);
+      return page.evaluate((selector) => {
+        const getText = (div) => {
+          return {
+            op: '',
+            date: div.querySelector('abbr').textContent,
+            text: '',
+            img: '',
+            link: ''
+          };
+        };
+        const getComments = (div) => {
+          return {
+            nComments: '',
+            visualization: '',
+            comments: [],
+          };
+        };
+        const divs = document.querySelectorAll(selector)
+        const contentDiv = Array.prototype.filter.call(divs, el => el.innerText !== '')
+        const postContentDiv = getText(contentDiv[0].firstElementChild);
+        const commentContentDiv = getComments(contentDiv[0].lastElementChild);
+        return {
+          post: postContentDiv,
+          comments: commentContentDiv
+        }
+      }, selector)
+    }
+  });
+  return Promise.all(posts)
 };
 
 const fetchAllPosts = async (browser) => {
@@ -84,8 +130,8 @@ const fetchAllPosts = async (browser) => {
   await page.goto(groupUrl, { waitUntil: 'load' });
 
   await scrollToBottom(page);
+  await openComments(page);
   await page.waitFor(3000);
-  
   await page.screenshot({
     path: 'groupfeed.png',
     fullPage: true
@@ -93,7 +139,7 @@ const fetchAllPosts = async (browser) => {
 
   const postValues = await page.$$eval(postSelector, e => e);
   const postFeedValues = await page.$$eval(postFeedSelector, e => e);
-  const getIdOfSelector = item => JSON.parse(item.__FB_STORE['data-ft']).qid;
+  const getIdOfSelector = item => JSON.parse(item.__FB_STORE['data-ft'])['mf_story_key'];
   const postArticleIds = postValues.map(getIdOfSelector)
   const postFeedIds = postFeedValues.map(getIdOfSelector)
 
@@ -101,11 +147,15 @@ const fetchAllPosts = async (browser) => {
     ...postArticleIds,
     ...postFeedIds,
   ]
+  console.log('Getting the posts data...')
   return getPostData(page, groupPostIds);
 };
 
 const saveAsJson = async (posts) => {
-  await console.log(posts);  
+  console.log('Saving data as json!')
+  const write = util.promisify(fs.writeFile);
+  await write('data.json', JSON.stringify(posts), 'utf8');
+  console.log('Saved as data.json!');
   return posts
 };
 

@@ -32,7 +32,9 @@ pfg email@test.com password groupId --report
     - [ ] get post data
     - [ ] get user data
     - [ ] fetch group members data
-    - [ ] save as json
-- [x] Cli
+    - [x] save as json
+- [ ] logger
+- [ ] retry and edgy cases
+- [x] Cli(tem mais coisa pra por obvio)
 - [ ] Data analysis
 - [ ] Graph generation

@@ -7,7 +7,7 @@ const browser = async (config) => {
     args: ['--disable-notifications', '--start-maximized'],
   });
   const page = await browser.newPage();
-
+  page.on('console', (log) => console[log._type](log._text));
   return {
     page: page,
     data: data,
