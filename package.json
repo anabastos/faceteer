@@ -4,7 +4,8 @@
     "@babel/core": "7.5.5",
     "@babel/node": "7.5.5",
     "@babel/preset-env": "7.5.5",
-    "puppeteer": "1.18.1"
+    "puppeteer": "1.18.1",
+    "ramda": "0.26.1"
   },
   "name": "pup-facebook-group",
   "description": "Facebook groups scrapper using puppeter",

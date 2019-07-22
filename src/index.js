@@ -3,10 +3,10 @@ import scrap from './scrap';
 const test = async () => {
   const scrapper = await scrap();
   try {
-    await scrapper.goTo('https://example.com');
-    await scrapper.close();
+    await scrapper.login()
+    await scrapper.close()
   } catch (e) {
-    console.error(`Error trying to scrape! :(\n${e}`);
+    throw `Error trying to scrape: ${e}`;
   }
 };
 
