@@ -26,20 +26,13 @@ pfg email@test.com password groupId --report
 #### TODO
 
 - [ ] Scrapper
-    - [x] Browser
-    - [ ] locators
+    - [x] Basic structure
     - [x] login
-    - [ ] fetchAllGroupPosts
-    - [ ] fetchGroupMembers
-    - [ ] GetUserData
-    - [ ] saveAsJson
-- [ ] Cli
+    - [x] fetch group posts
+    - [ ] get post data
+    - [ ] get user data
+    - [ ] fetch group members data
+    - [ ] save as json
+- [x] Cli
 - [ ] Data analysis
 - [ ] Graph generation
-
-#### License
-```
-MIT License
-
-Copyright (c) 2019 Ana Luiza Bastos
-```
