@@ -1,5 +1,5 @@
 import { TimeoutError } from 'puppeteer/Errors';
-import elements from './elements';
+import elements from './helpers/elements';
 
 const {
   url,
@@ -10,16 +10,9 @@ const {
   postFeedSelector,
 } = elements;
 
-const config = {
-  username: '',
-  password: '',
-  groupId: '',
-}
-const getPage = async (browser) => await browser.newPage();
-
 const focusSelector = async (page, element) => {
   try {
-    await page.waitForSelector(element);
+    await page.waitForSelsector(element);
     await page.focus(element);
   } catch (e) {
     if (e instanceof TimeoutError) {
@@ -56,17 +49,18 @@ const clickButton = async (page, element) => {
   return page;
 }
 
-const login = async (page) => {
+const login = async (browser) => {
+  const page = browser.page;
   await page.goto(url, { waitUntil: 'load' });
 
   await focusSelector(page, userForm);
-  await writeForm(page, userForm, config.username);
+  await writeForm(page, userForm, browser.data.username);
   await focusSelector(page, passForm);
-  await writeForm(page, passForm, config.password);
+  await writeForm(page, passForm, browser.data.password);
   
   await clickButton(page, loginButton);
   await page.waitForNavigation({ waitUntil: 'networkidle2' });
-  return page;
+  return browser;
 };
 
 const scrollToBottom = async (page) => {
@@ -84,8 +78,9 @@ const getPostData = async (page, groupIds) => {
   return groupIds
 };
 
-const fetchAllPosts = async (page) => {
-  const groupUrl = `${url}/groups/${config.groupId}`;
+const fetchAllPosts = async (browser) => {
+  const page = browser.page;
+  const groupUrl = `${url}/groups/${browser.data.groupId}`;
   await page.goto(groupUrl, { waitUntil: 'load' });
 
   await scrollToBottom(page);
@@ -116,7 +111,6 @@ const saveAsJson = async (posts) => {
 
 export {
   login,
-  getPage,
   fetchAllPosts,
   saveAsJson,
 };

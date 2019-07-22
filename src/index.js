@@ -1,14 +1,17 @@
-import scrap from './scrap';
+import scrap from './helpers/scrap';
 
-const test = async () => {
-  const scrapper = await scrap();
+const init = async (config) => {
+  const scrapper = await scrap(config);
   try {
     // await scrapper.login()
     await scrapper.getPosts()
-    await scrapper.close()
   } catch (e) {
     throw `Error trying to scrape: ${e}`;
   }
 };
 
-test();
+init({
+  username: '',
+  password: '',
+  groupId: '',
+});

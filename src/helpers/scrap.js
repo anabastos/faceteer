@@ -1,26 +1,19 @@
-import puppeteer from 'puppeteer';
 import { pipeP } from 'ramda';
 
+import browserInit from './browser';
+
 import {
-  getPage,
   login,
   fetchAllPosts,
   saveAsJson,
-} from './helper';
+} from '../helper';
 
-const scrap = async () => {
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ['--disable-notifications', '--start-maximized'],
-  });
+const scrap = async (config) => {
+  const browser = await browserInit(config);
   const doLogin = pipeP(
-    getPage,
     login,
-    fetchAllPosts,
-    saveAsJson,
   )
   const getPosts = pipeP(
-    getPage,
     login,
     fetchAllPosts,
     saveAsJson,
@@ -29,6 +22,7 @@ const scrap = async () => {
     login: async () => {
       try {
         await doLogin(browser);
+        browser.close()
       } catch (e) {
         throw `Could not login \n ${e}`
       }
@@ -36,11 +30,11 @@ const scrap = async () => {
     getPosts: async () => {
       try {
         await getPosts(browser);
+        browser.close()
       } catch (e) {
         throw `Could not getPosts \n ${e}`
       }
     },
-    close: async () => await browser.close(),
   }
 };
 
