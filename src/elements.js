@@ -3,6 +3,6 @@ export default {
   userForm: '#email',
   passForm: '#pass',
   loginButton: '#loginbutton',
-  logoutLink: 'a#pageLoginAnchor',
-  logoutButton: '//span[contains(text(),"Log Out")]',
+  postSelector: 'div[role=\'region\'] > div[role=\'article\']',
+  postFeedSelector: 'div[role=\'feed\'] > div[role=\'article\']',
 };

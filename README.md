@@ -26,10 +26,12 @@ pfg email@test.com password groupId --report
 #### TODO
 
 - [ ] Scrapper
-    - [ ] Browser
+    - [x] Browser
     - [ ] locators
-    - [ ] login
+    - [x] login
     - [ ] fetchAllGroupPosts
+    - [ ] fetchGroupMembers
+    - [ ] GetUserData
     - [ ] saveAsJson
 - [ ] Cli
 - [ ] Data analysis
