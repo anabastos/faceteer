@@ -13,6 +13,7 @@ const {
   postFeedSelector,
   argumentSelector,
   groupPostDiv,
+  groupSelectors,
 } = elements;
 
 const focusSelector = async (page, element) => {
@@ -85,30 +86,46 @@ const scrollToBottom = async (page) => {
   }
 };
 
-const openComments = async (page) => {
-  console.log('TODO')
+const clickAllButtons = async (page, element) => {
+  return page.evaluate((selector) => {
+    const elements = document.querySelectorAll(selector);
+    return Promise.all(Array.prototype.map.call(elements, e => e.click()));
+  }, element)
 }
 
 const getPostData = async (page, groupIds) => {
   const posts = groupIds.map(async id => {
     if (typeof id === 'string') {
       const selector = groupPostDiv(id);
-      return page.evaluate((selector) => {
+      return page.evaluate((selector, groupSelectors) => {
         const getText = (div) => {
+
+          const bigText = div.querySelector(groupSelectors.groupPostBigText)
+            ? div.querySelector(groupSelectors.groupPostBigText).textContent
+            : ''
+          const text = div.querySelector(groupSelectors.groupPostText)
+            ? div.querySelector(groupSelectors.groupPostText).textContent
+            : ''
+
+          const img = div.querySelector(groupSelectors.groupPostImg)
+            && div.querySelector(groupSelectors.groupPostImg).getAttribute('src')
+          const linkImg = div.querySelector(groupSelectors.groupPostLinkImg)
+          && div.querySelector(groupSelectors.groupPostLinkImg).getAttribute('src')
+
+          const link = div.querySelector(groupSelectors.groupPostLink)
+          && div.querySelector(groupSelectors.groupPostLink).getAttribute('href')
+
           return {
-            op: '',
-            date: div.querySelector('abbr').textContent,
-            text: '',
-            img: '',
-            link: ''
+            op: div.querySelector(groupSelectors.groupPostsAuthor).textContent,
+            date: div.querySelector(groupSelectors.postDate).textContent,
+            text: bigText || text,
+            img: linkImg || img,
+            link,
           };
         };
         const getComments = (div) => {
-          return {
-            nComments: '',
-            visualization: '',
-            comments: [],
-          };
+          const commentSpans = div.querySelectorAll(groupSelectors.groupCommentText);
+          return Array.prototype.map.call(commentSpans, el => el.textContent);
         };
         const divs = document.querySelectorAll(selector)
         const contentDiv = Array.prototype.filter.call(divs, el => el.innerText !== '')
@@ -118,7 +135,7 @@ const getPostData = async (page, groupIds) => {
           post: postContentDiv,
           comments: commentContentDiv
         }
-      }, selector)
+      }, selector, groupSelectors)
     }
   });
   return Promise.all(posts)
@@ -130,7 +147,7 @@ const fetchAllPosts = async (browser) => {
   await page.goto(groupUrl, { waitUntil: 'load' });
 
   await scrollToBottom(page);
-  await openComments(page);
+  await clickAllButtons(page, groupSelectors.groupMoreCommentsButton);
   await page.waitFor(3000);
   await page.screenshot({
     path: 'groupfeed.png',

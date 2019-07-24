@@ -29,7 +29,7 @@ pfg email@test.com password groupId --report
     - [x] Basic structure
     - [x] login
     - [x] fetch group posts
-    - [ ] get post data
+    - [x] get post data
     - [ ] get user data
     - [ ] fetch group members data
     - [x] save as json

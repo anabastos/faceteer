@@ -1,10 +1,30 @@
 export default {
   url: 'https://www.facebook.com/',
+  urlGroupMember: id => `https://www.facebook.com/groups/${id}/members/`,
   userForm: '#email',
   passForm: '#pass',
   loginButton: '#loginbutton',
   postSelector: 'div[role=\'region\'] > div[role=\'article\']',
   postFeedSelector: 'div[role=\'feed\'] > div[role=\'article\']',
   argumentSelector: 'arguments[0].click()',
-  groupPostDiv: id => `[id*="mall_post_${id}"] > div > div`
+  groupPostDiv: id => `[id*="mall_post_${id}"] > div > div`,
+  groupSelectors: {
+    postDate: 'abbr',
+    groupPostText: 'div._5pbx',
+    groupPostBigText: 'span._4a6n',
+    groupPostsAuthor: 'span.fwb',
+    groupPostImg: 'img.scaledImageFitHeight',
+    groupPostLinkImg: 'img.scaledImageFitWidth',
+    groupPostLink: 'a._52c6',
+    groupAttachedImg: 'div.fbStoryAttachmentImage',
+    groupCommentText: 'span[class=\'_3l3x\'] > span',
+    groupMoreCommentsButton: 'div[class=\'_4sxd\']',
+    groupMemberListName: 'div._60ri',
+  },
+  profileSelectors: {
+    profileWorkList: 'li.experience',
+    profileBasicInfo: 'div._4bl7',
+    profileCities: 'span._2iel',
+    profileFamilyRelationShip: 'div._50f5',
+  }
 };
