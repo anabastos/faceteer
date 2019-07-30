@@ -1,10 +1,10 @@
 ### pup-facebook-group
 
-Facebook groups scrapper using puppeter
+Facebook group scraper using puppeteer
 
 ### Why?
-- Researches about comportament of users
-- Track usual content of a group
+- Researches about user behavior
+- Group content tracking
 
 ### Install
 
@@ -25,7 +25,7 @@ pfg email@test.com password groupId --report
 
 #### TODO
 
-- [ ] Scrapper
+- [ ] Scraper
     - [x] Basic structure
     - [x] login
     - [x] fetch group posts
@@ -34,7 +34,7 @@ pfg email@test.com password groupId --report
     - [ ] fetch group members data
     - [x] save as json
 - [ ] logger
-- [ ] retry and edgy cases
-- [x] Cli(tem mais coisa pra por obvio)
+- [ ] retry and edge cases
+- [x] Cli (should be improved)
 - [ ] Data analysis
 - [ ] Graph generation
