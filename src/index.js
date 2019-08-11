@@ -8,7 +8,8 @@ const init = async (config) => {
   const scrapper = await scrap(config);
   try {
     // await scrapper.login()
-    await scrapper.getPosts()
+    // await scrapper.getPosts()
+    await scrapper.getUser()
   } catch (e) {
     throw `Error trying to scrape: ${e}`;
   }
@@ -20,7 +21,8 @@ prog
   .command('pfg', 'Pup facebook group')
   .argument('<username>', 'Facebook Username')
   .argument('<password>', 'Facebook Password')
-  .argument('<groupId>', 'Facebook Group id')
+  .argument('<personId>', 'Profile id')
+  // .argument('<groupId>', 'Facebook Group id')
   .option('--tail <lines>', 'Tail <lines> lines of logs after deploy', prog.INT)
   .action((args) => {
     init(args);

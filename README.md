@@ -26,12 +26,15 @@ pfg email@test.com password groupId --report
 #### TODO
 
 - [ ] Scrapper
-    - [x] Basic structure
     - [x] login
     - [x] fetch group posts
     - [x] get post data
-    - [ ] get user data
+    - [x] get user data
     - [ ] fetch group members data
+    - [ ] get post reactions
+    - [ ] person posts
+    - [ ] get life events
+    - [ ] refactory
     - [x] save as json
 - [ ] logger
 - [ ] retry and edgy cases

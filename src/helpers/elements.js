@@ -22,9 +22,13 @@ export default {
     groupMemberListName: 'div._60ri',
   },
   profileSelectors: {
-    profileWorkList: 'li.experience',
-    profileBasicInfo: 'div._4bl7',
-    profileCities: 'span._2iel',
-    profileFamilyRelationShip: 'div._50f5',
+    contactInfoIndex: 'div._4qm1 > ul > li > div > div._52ju',
+    contactInfoValue: 'div._4qm1 > ul > li > div > div._pt5',
+    cityIndex: 'span._2iel',
+    cityValue: 'div._4bl9 > div > div > div > div > div.fwn',
+    educationIndex: 'div._2lzr',
+    educationValue: 'div._173e',
+    relashionShip: 'li._3pw9',
+    familyRelationShip: 'div#family-relationships-pagelet > div > ul > li',
   }
 };

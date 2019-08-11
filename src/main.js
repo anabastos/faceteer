@@ -1,8 +1,16 @@
 import fs from 'fs';
 import util from 'util';
 import { TimeoutError } from 'puppeteer/Errors';
+import {
+  applySpec,
+} from 'ramda';
 
 import elements from './helpers/elements';
+import options from './helpers/options';
+
+const {
+  familyRelations
+} = options;
 
 const {
   url,
@@ -14,6 +22,7 @@ const {
   argumentSelector,
   groupPostDiv,
   groupSelectors,
+  profileSelectors,
 } = elements;
 
 const focusSelector = async (page, element) => {
@@ -127,19 +136,119 @@ const getPostData = async (page, groupIds) => {
           const commentSpans = div.querySelectorAll(groupSelectors.groupCommentText);
           return Array.prototype.map.call(commentSpans, el => el.textContent);
         };
+
         const divs = document.querySelectorAll(selector)
         const contentDiv = Array.prototype.filter.call(divs, el => el.innerText !== '')
-        const postContentDiv = getText(contentDiv[0].firstElementChild);
-        const commentContentDiv = getComments(contentDiv[0].lastElementChild);
-        return {
-          post: postContentDiv,
-          comments: commentContentDiv
-        }
-      }, selector, groupSelectors)
+        
+        const postDiv = contentDiv[0].firstElementChild;
+        const commentDiv = contentDiv[0].lastElementChild;
+
+        const getPostContent = applySpec({
+          post: getText,
+          comments: getComments,
+        });
+
+        return getPostContent(postDiv, commentDiv);
+      }, selector, groupSelectors);
     }
   });
   return Promise.all(posts)
 };
+
+const getKeyValueObjBySelector = (page, key, value) => {
+  return page.evaluate((key, value) => {
+    const selectorKey = document.querySelectorAll(key)
+    const listKeys = Array.prototype.map.call(selectorKey, el => el.textContent);
+    const selectorValue = document.querySelectorAll(value)
+    const listValues = Array.prototype.map.call(selectorValue, el => el.textContent);
+
+    return listKeys.reduce((acc, item, index) => {
+      acc[item] = listValues[index];
+      return acc;
+    }, {});
+  }, key, value);
+}
+
+const getUserData = async (browser) => {
+  const page = browser.page;
+  const profileUrl = `${url}${browser.data.personId}`;
+  const profileRelationship = `${profileUrl}/about?section=relationship`
+  await page.goto(profileRelationship, { timeout: 1000000, waitUntil: 'load' });
+
+  await page.evaluate(() => {
+    window.getRelationshipData = (text) => {
+      if (text === 'Nenhuma informação de relacionamento a ser exibida') {
+        return {}
+      }
+      if (text === 'Solteiro') {
+        return { status: text }
+      }
+      const textSplitted = splitText(['Em um relacionamento', 'Casado'], text);
+      return ({
+        status: textSplitted[1],
+        personName: textSplitted[0],
+      });
+    }
+
+    window.splitText = (possibleList, text) => possibleList.reduce((acc, item) => {
+      return text.includes(item)
+        ? [text.substring(0, text.search(item)), item]
+        : acc;
+    }, [])
+
+    window.getFamilyRelationshipData = (relations) => {
+      return relations.map((text) => {
+        const textSplitted = splitText(familyRelations, text);
+        return {
+          name: textSplitted[0],
+          relation: textSplitted[1],
+        }
+      })
+    }
+  });
+
+  const relationshipData = await page.evaluate((profileSelectors) => {
+    const romanticRelationshipSelector = document.querySelector(profileSelectors.relashionShip)
+    const romanticRelationship = getRelationshipData(romanticRelationshipSelector.textContent)
+    const familyRelationshipSelector = document.querySelectorAll(profileSelectors.familyRelationShip)
+    const familyRelationshipList = Array.prototype.map.call(familyRelationshipSelector, el => el.textContent);
+
+    const familyRelationship = getFamilyRelationshipData(familyRelationshipList)
+    return {
+      romanticRelationship,
+      familyRelationship,
+    }
+  }, profileSelectors)
+
+  const profileContact = `${profileUrl}/about?section=contact-info`
+  await page.goto(profileContact, { timeout: 1000000, waitUntil: 'load' });
+  const contactData = await getKeyValueObjBySelector(page, profileSelectors.contactInfoIndex, profileSelectors.contactInfoValue)
+
+  const profileLiving = `${profileUrl}/about?section=living`
+  await page.goto(profileLiving, { timeout: 1000000, waitUntil: 'load' });
+  const livingData = await getKeyValueObjBySelector(page, profileSelectors.cityIndex, profileSelectors.cityValue)
+
+  const profileEducation = `${profileUrl}/about?section=education`
+  await page.goto(profileEducation, { timeout: 1000000, waitUntil: 'load' });
+  const educationData = await getKeyValueObjBySelector(page, profileSelectors.educationIndex, profileSelectors.educationValue)
+
+  console.log('relationship ===', relationshipData)
+  console.log('contact ===', contactData)
+  console.log('living ===', livingData)
+  console.log('education ===', educationData)
+
+  await page.screenshot({
+    path: 'person.png',
+    fullPage: true
+  });
+
+  return {
+    ...relationshipData,
+    ...contactData,
+    ...livingData,
+    ...educationData,
+  }
+}
 
 const fetchAllPosts = async (browser) => {
   const page = browser.page;
@@ -179,5 +288,6 @@ const saveAsJson = async (posts) => {
 export {
   login,
   fetchAllPosts,
+  getUserData,
   saveAsJson,
 };

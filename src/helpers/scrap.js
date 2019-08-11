@@ -5,8 +5,9 @@ import browserInit from './browser';
 import {
   login,
   fetchAllPosts,
+  getUserData,
   saveAsJson,
-} from '../helper';
+} from '../main';
 
 const scrap = async (config) => {
   const browser = await browserInit(config);
@@ -16,6 +17,11 @@ const scrap = async (config) => {
   const getPosts = pipeP(
     login,
     fetchAllPosts,
+    saveAsJson,
+  )
+  const getUser = pipeP(
+    login,
+    getUserData,
     saveAsJson,
   )
   return {
@@ -30,6 +36,14 @@ const scrap = async (config) => {
     getPosts: async () => {
       try {
         await getPosts(browser);
+        browser.close()
+      } catch (e) {
+        throw `Could not getPosts \n ${e}`
+      }
+    },
+    getUser: async () => {
+      try {
+        await getUser(browser);
         browser.close()
       } catch (e) {
         throw `Could not getPosts \n ${e}`
