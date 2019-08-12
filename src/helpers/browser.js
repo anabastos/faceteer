@@ -8,6 +8,8 @@ const browser = async (config) => {
   });
   const page = await browser.newPage();
   page.on('console', (log) => console[log._type](log._text));
+  page.getBrowser = () => browser;
+
   return {
     page: page,
     data: data,

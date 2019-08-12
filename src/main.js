@@ -7,10 +7,13 @@ import {
 
 import elements from './helpers/elements';
 import options from './helpers/options';
+import getAge from './helpers/dateUtil';
 
+const { ptBr } = options;
 const {
-  familyRelations
-} = options;
+  familyRelations,
+  romanticRelations,
+} = ptBr;
 
 const {
   url,
@@ -109,32 +112,34 @@ const getPostData = async (page, groupIds) => {
       return page.evaluate((selector, groupSelectors) => {
         const getText = (div) => {
 
-          const bigText = div.querySelector(groupSelectors.groupPostBigText)
-            ? div.querySelector(groupSelectors.groupPostBigText).textContent
+          const bigText = div.querySelector(groupSelectors.postBigText)
+            ? div.querySelector(groupSelectors.postBigText).textContent
             : ''
-          const text = div.querySelector(groupSelectors.groupPostText)
-            ? div.querySelector(groupSelectors.groupPostText).textContent
+          const text = div.querySelector(groupSelectors.postText)
+            ? div.querySelector(groupSelectors.postText).textContent
             : ''
 
-          const img = div.querySelector(groupSelectors.groupPostImg)
-            && div.querySelector(groupSelectors.groupPostImg).getAttribute('src')
-          const linkImg = div.querySelector(groupSelectors.groupPostLinkImg)
-          && div.querySelector(groupSelectors.groupPostLinkImg).getAttribute('src')
+          const img = div.querySelector(groupSelectors.postImg)
+            && div.querySelector(groupSelectors.postImg).getAttribute('src')
+          const linkImg = div.querySelector(groupSelectors.postLinkImg)
+          && div.querySelector(groupSelectors.postLinkImg).getAttribute('src')
 
-          const link = div.querySelector(groupSelectors.groupPostLink)
-          && div.querySelector(groupSelectors.groupPostLink).getAttribute('href')
+          const link = div.querySelector(groupSelectors.postLink)
+          && div.querySelector(groupSelectors.postLink).getAttribute('href')
 
+          const author = div.querySelector(groupSelectors.postsAuthor);
+          const date = div.querySelector(groupSelectors.postDate)
           return {
-            op: div.querySelector(groupSelectors.groupPostsAuthor).textContent,
-            date: div.querySelector(groupSelectors.postDate).textContent,
+            op: author && author.textContent,
+            date: date && date.textContent,
             text: bigText || text,
             img: linkImg || img,
             link,
           };
         };
         const getComments = (div) => {
-          const commentSpans = div.querySelectorAll(groupSelectors.groupCommentText);
-          return Array.prototype.map.call(commentSpans, el => el.textContent);
+          const commentSpans = div.querySelectorAll(groupSelectors.commentText);
+          return Array.prototype.map.call(commentSpans, el => el && el.textContent);
         };
 
         const divs = document.querySelectorAll(selector)
@@ -143,12 +148,10 @@ const getPostData = async (page, groupIds) => {
         const postDiv = contentDiv[0].firstElementChild;
         const commentDiv = contentDiv[0].lastElementChild;
 
-        const getPostContent = applySpec({
-          post: getText,
-          comments: getComments,
-        });
-
-        return getPostContent(postDiv, commentDiv);
+        return {
+          post: getText(postDiv),
+          comments: getComments(commentDiv),
+        };
       }, selector, groupSelectors);
     }
   });
@@ -158,9 +161,9 @@ const getPostData = async (page, groupIds) => {
 const getKeyValueObjBySelector = (page, key, value) => {
   return page.evaluate((key, value) => {
     const selectorKey = document.querySelectorAll(key)
-    const listKeys = Array.prototype.map.call(selectorKey, el => el.textContent);
+    const listKeys = Array.prototype.map.call(selectorKey, el => el && el.textContent);
     const selectorValue = document.querySelectorAll(value)
-    const listValues = Array.prototype.map.call(selectorValue, el => el.textContent);
+    const listValues = Array.prototype.map.call(selectorValue, el => el && el.textContent);
 
     return listKeys.reduce((acc, item, index) => {
       acc[item] = listValues[index];
@@ -169,13 +172,21 @@ const getKeyValueObjBySelector = (page, key, value) => {
   }, key, value);
 }
 
-const getUserData = async (browser) => {
+const getUserData = async (browser, id = '') => {
   const page = browser.page;
-  const profileUrl = `${url}${browser.data.personId}`;
+  console.log(`getting ${id} user data...`)
+  const profileUrl = (browser.data && browser.data.personId)
+    ? `${url}/${browser.data.personId}`
+    : `${url}/${id}`
+
   const profileRelationship = `${profileUrl}/about?section=relationship`
   await page.goto(profileRelationship, { timeout: 1000000, waitUntil: 'load' });
+  await page.screenshot({
+    path: `person${id}.png`,
+    fullPage: true
+  });
 
-  await page.evaluate(() => {
+  await page.evaluate((romanticRelations) => {
     window.getRelationshipData = (text) => {
       if (text === 'Nenhuma informação de relacionamento a ser exibida') {
         return {}
@@ -183,7 +194,7 @@ const getUserData = async (browser) => {
       if (text === 'Solteiro') {
         return { status: text }
       }
-      const textSplitted = splitText(['Em um relacionamento', 'Casado'], text);
+      const textSplitted = splitText(romanticRelations, text);
       return ({
         status: textSplitted[1],
         personName: textSplitted[0],
@@ -191,12 +202,13 @@ const getUserData = async (browser) => {
     }
 
     window.splitText = (possibleList, text) => possibleList.reduce((acc, item) => {
+      const name = text.substring(0, text.search(item));
       return text.includes(item)
-        ? [text.substring(0, text.search(item)), item]
+        ? [name, item]
         : acc;
     }, [])
 
-    window.getFamilyRelationshipData = (relations) => {
+    window.getFamilyRelationshipData = (relations, familyRelations) => {
       return relations.map((text) => {
         const textSplitted = splitText(familyRelations, text);
         return {
@@ -205,20 +217,20 @@ const getUserData = async (browser) => {
         }
       })
     }
-  });
+  }, familyRelations, romanticRelations);
 
-  const relationshipData = await page.evaluate((profileSelectors) => {
+  const relationshipData = await page.evaluate((profileSelectors, familyRelations) => {
     const romanticRelationshipSelector = document.querySelector(profileSelectors.relashionShip)
-    const romanticRelationship = getRelationshipData(romanticRelationshipSelector.textContent)
+    const romanticRelationship = romanticRelationshipSelector && getRelationshipData(romanticRelationshipSelector.textContent)
     const familyRelationshipSelector = document.querySelectorAll(profileSelectors.familyRelationShip)
-    const familyRelationshipList = Array.prototype.map.call(familyRelationshipSelector, el => el.textContent);
+    const familyRelationshipList = Array.prototype.map.call(familyRelationshipSelector, el => el && el.textContent);
 
-    const familyRelationship = getFamilyRelationshipData(familyRelationshipList)
+    const familyRelationship = getFamilyRelationshipData(familyRelationshipList, familyRelations)
     return {
       romanticRelationship,
       familyRelationship,
     }
-  }, profileSelectors)
+  }, profileSelectors, familyRelations)
 
   const profileContact = `${profileUrl}/about?section=contact-info`
   await page.goto(profileContact, { timeout: 1000000, waitUntil: 'load' });
@@ -226,16 +238,16 @@ const getUserData = async (browser) => {
 
   const profileLiving = `${profileUrl}/about?section=living`
   await page.goto(profileLiving, { timeout: 1000000, waitUntil: 'load' });
-  const livingData = await getKeyValueObjBySelector(page, profileSelectors.cityIndex, profileSelectors.cityValue)
+  const livingData = await getKeyValueObjBySelector(page, profileSelectors.cityValue, profileSelectors.cityIndex)
 
   const profileEducation = `${profileUrl}/about?section=education`
   await page.goto(profileEducation, { timeout: 1000000, waitUntil: 'load' });
   const educationData = await getKeyValueObjBySelector(page, profileSelectors.educationIndex, profileSelectors.educationValue)
 
-  console.log('relationship ===', relationshipData)
-  console.log('contact ===', contactData)
-  console.log('living ===', livingData)
-  console.log('education ===', educationData)
+  const name = await page.evaluate((profileSelectors) => {
+    const nameSelector = document.querySelector(profileSelectors.name)
+    return nameSelector && nameSelector.textContent;
+  }, profileSelectors);
 
   await page.screenshot({
     path: 'person.png',
@@ -247,16 +259,49 @@ const getUserData = async (browser) => {
     ...contactData,
     ...livingData,
     ...educationData,
+    name,
+    age: contactData['Data de nascimento'] && contactData['Data de nascimento'].length > 4
+      ? getAge(contactData['Data de nascimento'])
+      : null
   }
 }
 
-const fetchAllPosts = async (browser) => {
+const getMembersData = async (browser, groupUrl) => {
+  const page = browser.page;
+  await page.goto(`${groupUrl}/members/`, { waitUntil: 'load' });
+  await scrollToBottom(page);
+  await page.screenshot({
+    path: 'groupmembers.png',
+    fullPage: true
+  });
+  const membersLinks = await page.evaluate((groupSelectors) => {
+    const memberImg = document.querySelectorAll(groupSelectors.memberListName);
+    const memberImgExtended = document.querySelectorAll(groupSelectors.memberListNameExtended);
+    const allMembers = document.querySelectorAll(groupSelectors.memberAllListName);
+
+    const memberImgLinks = Array.prototype.map.call(memberImg, el => el.getAttribute('href'))
+    const memberImgExtendedLinks = Array.prototype.map.call(memberImgExtended, el => el.getAttribute('href'))
+    const memberImgAllLinks = Array.prototype.map.call(allMembers, el => el.getAttribute('href'))
+
+    return memberImgLinks
+      .concat(memberImgExtendedLinks)
+      .concat(memberImgAllLinks);
+  }, groupSelectors);
+
+  return Promise.all(membersLinks.map(async (link) => {
+    const profileId = link.split('?')[0].substring(25);
+    await page.waitFor(3000);
+    return getUserData(browser, profileId)
+  }));
+}
+
+const getGroupData = async (browser) => {
   const page = browser.page;
   const groupUrl = `${url}/groups/${browser.data.groupId}`;
   await page.goto(groupUrl, { waitUntil: 'load' });
 
   await scrollToBottom(page);
-  await clickAllButtons(page, groupSelectors.groupMoreCommentsButton);
+  await clickAllButtons(page, groupSelectors.moreCommentsButton);
   await page.waitFor(3000);
   await page.screenshot({
     path: 'groupfeed.png',
@@ -269,12 +314,22 @@ const fetchAllPosts = async (browser) => {
   const postArticleIds = postValues.map(getIdOfSelector)
   const postFeedIds = postFeedValues.map(getIdOfSelector)
 
+  if (postArticleIds.length === 0) {
+    console.error('Something is wrong! Maybe you don\'t have access to this group');
+  }
+
   const groupPostIds = [
     ...postArticleIds,
     ...postFeedIds,
   ]
   console.log('Getting the posts data...')
-  return getPostData(page, groupPostIds);
+  const posts = await getPostData(page, groupPostIds);
+  console.log('Getting members data...')
+  const members = await getMembersData(browser, groupUrl);
+  return {
+    posts,
+    members,
+  }
 };
 
 const saveAsJson = async (posts) => {
@@ -287,7 +342,7 @@ const saveAsJson = async (posts) => {
 
 export {
   login,
-  fetchAllPosts,
+  getGroupData,
   getUserData,
   saveAsJson,
 };

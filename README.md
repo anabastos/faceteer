@@ -17,7 +17,7 @@ $ npm install --global pup-facebook-group
 pfg email@test.com password groupId
 ```
 
-Uses natural language to analyse group content and creates a report with pretty graphs <3
+Uses natural language to analyse group content and creates a report with pretty charts <3
 
 ```
 pfg email@test.com password groupId --report
@@ -25,19 +25,9 @@ pfg email@test.com password groupId --report
 
 #### TODO
 
-- [ ] Scrapper
-    - [x] login
-    - [x] fetch group posts
-    - [x] get post data
-    - [x] get user data
-    - [ ] fetch group members data
-    - [ ] get post reactions
-    - [ ] person posts
-    - [ ] get life events
-    - [ ] refactory
-    - [x] save as json
+- [ ] get profile life events
+- [ ] fix profile relationships
+- [ ] complete and simple user scrap
 - [ ] logger
-- [ ] retry and edgy cases
-- [x] Cli(tem mais coisa pra por obvio)
-- [ ] Data analysis
-- [ ] Graph generation
+- [ ] data analysis
+- [ ] chart generation

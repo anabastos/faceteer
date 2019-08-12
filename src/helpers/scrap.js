@@ -4,7 +4,7 @@ import browserInit from './browser';
 
 import {
   login,
-  fetchAllPosts,
+  getGroupData,
   getUserData,
   saveAsJson,
 } from '../main';
@@ -16,7 +16,7 @@ const scrap = async (config) => {
   )
   const getPosts = pipeP(
     login,
-    fetchAllPosts,
+    getGroupData,
     saveAsJson,
   )
   const getUser = pipeP(
