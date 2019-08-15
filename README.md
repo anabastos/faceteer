@@ -1,6 +1,7 @@
-### pup-facebook-group
 
-Facebook groups scrapper using puppeter
+![Faceteer Logo](docs/logo.png)
+
+Facebook scrapper using puppeter
 
 ### Why?
 - Researches about comportament of users

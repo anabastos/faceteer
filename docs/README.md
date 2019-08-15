@@ -1,4 +1,4 @@
-### Faceteer
+![Faceteer Logo](logo.png)
 
 Facebook scrapper using puppeter
 
