@@ -1,13 +1,11 @@
 import fs from 'fs';
 import util from 'util';
 import { TimeoutError } from 'puppeteer/Errors';
-import {
-  applySpec,
-} from 'ramda';
 
 import elements from './helpers/elements';
 import options from './helpers/options';
 import getAge from './helpers/dateUtil';
+import { error, debug, success } from './helpers/logs';
 
 const { ptBr } = options;
 const {
@@ -68,7 +66,7 @@ const clickButton = async (page, element) => {
 }
 
 const login = async (browser) => {
-  console.log('Logging you in under your credentials...')
+  debug('Logging you in under your credentials...')
   const page = browser.page;
   await page.goto(url, { waitUntil: 'load' });
 
@@ -87,7 +85,7 @@ const login = async (browser) => {
 };
 
 const scrollToBottom = async (page) => {
-  console.log('Scrolling the facebook group...\n this might take a while!')
+  debug('Scrolling the facebook group...\n this might take a while!')
   const distance = 100; // should be less than or equal to window.innerHeight
   const delay = 100;
   while (await page.evaluate(() => document.scrollingElement.scrollTop + window.innerHeight < document.scrollingElement.scrollHeight)) {
@@ -174,7 +172,7 @@ const getKeyValueObjBySelector = (page, key, value) => {
 
 const getUserData = async (browser, id = '') => {
   const page = browser.page;
-  console.log(`getting ${id} user data...`)
+  debug(`getting ${id} user data...`)
   const profileUrl = (browser.data && browser.data.personId)
     ? `${url}/${browser.data.personId}`
     : `${url}/${id}`
@@ -285,14 +283,16 @@ const getMembersData = async (browser, groupUrl) => {
 
     return memberImgLinks
       .concat(memberImgExtendedLinks)
-      .concat(memberImgAllLinks);
+      .concat(memberImgAllLinks)
+      .map(link => link.split('?')[0].substring(25));
   }, groupSelectors);
 
-  return Promise.all(membersLinks.map(async (link) => {
-    const profileId = link.split('?')[0].substring(25);
-    await page.waitFor(3000);
-    return getUserData(browser, profileId)
-  }));
+  let membersData = [];
+  for (let i = 0; i < membersLinks.length; i++) {
+    const memberData = await getUserData(browser, membersLinks[i]);
+    membersData.push(memberData);
+  }
+  return membersData;
 }
 
 const getGroupData = async (browser) => {
@@ -315,16 +315,16 @@ const getGroupData = async (browser) => {
   const postFeedIds = postFeedValues.map(getIdOfSelector)
 
   if (postArticleIds.length === 0) {
-    console.error('Something is wrong! Maybe you don\'t have access to this group');
+    error('Something is wrong! Maybe you don\'t have access to this group');
   }
 
   const groupPostIds = [
     ...postArticleIds,
     ...postFeedIds,
   ]
-  console.log('Getting the posts data...')
+  debug('Getting the posts data...')
   const posts = await getPostData(page, groupPostIds);
-  console.log('Getting members data...')
+  debug('Getting members data...')
   const members = await getMembersData(browser, groupUrl);
   return {
     posts,
@@ -333,10 +333,10 @@ const getGroupData = async (browser) => {
 };
 
 const saveAsJson = async (posts) => {
-  console.log('Saving data as json!')
+  debug('Saving data as json!')
   const write = util.promisify(fs.writeFile);
   await write('data.json', JSON.stringify(posts), 'utf8');
-  console.log('Saved as data.json!');
+  success('Saved as data.json!');
   return posts
 };
 

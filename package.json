@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "caporal": "1.2.0",
+    "chalk": "false2.4.2",
     "puppeteer": "1.18.1",
     "ramda": "0.26.1"
   },
