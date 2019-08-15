@@ -5,8 +5,8 @@
     "puppeteer": "1.18.1",
     "ramda": "0.26.1"
   },
-  "name": "pup-facebook-group",
-  "description": "Facebook groups scrapper using puppeter",
+  "name": "faceteer",
+  "description": "Facebook scrapper using puppeter",
   "version": "1.0.0",
   "main": "src/index.js",
   "devDependencies": {
