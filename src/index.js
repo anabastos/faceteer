@@ -12,20 +12,18 @@ const initScrap = (args, options) => {
   return scrap(config);
 };
 
-const getUserCommand = (args, options) => {
+const getUserCommand = async (args, options) => {
   const scrapper = await initScrap(args, options);
   try {
-    await scrapper.login()
     await scrapper.getUser()
   } catch (e) {
     throw `Error trying to scrape: ${e}`;
   }
 };
 
-const getGroupCommand = (args, options) => {
+const getGroupCommand = async (args, options) => {
   const scrapper = await initScrap(args, options);
   try {
-    await scrapper.login()
     await scrapper.getGroup()
   } catch (e) {
     throw `Error trying to scrape: ${e}`;
@@ -41,6 +39,7 @@ prog
   .argument('<password>', 'Facebook Password')
   .argument('<groupId>', 'Facebook Group id')
   .option('--members <members>', 'If it should get group <members> data. Default is false.', prog.BOOL)
+  .option('--debug <debug>', 'Show <debug> logs. Default is false.', prog.BOOL)
   .action((args, options) => {
     getGroupCommand(args, options);
   })
@@ -50,6 +49,7 @@ prog
   .argument('<password>', 'Facebook Password')
   .argument('<personId>', 'Facebook Profile id or username')
   .option('--posts <posts>', 'If it should include <posts> data. Default is false.', prog.BOOL)
+  .option('--debug <debug>', 'Show <debug> logs. Default is false.', prog.BOOL)
   .action((args, options) => {
     getUserCommand(args, options);
   });

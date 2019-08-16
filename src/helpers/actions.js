@@ -47,7 +47,7 @@ const clickButton = async (page, element) => {
 }
 
 const scrollToBottom = async (page) => {
-  debug('Scrolling the facebook group...\n this might take a while!')
+  debug('Scrolling the page...\n this might take a while!\n')
   const distance = 100; // should be less than or equal to window.innerHeight
   const delay = 100;
   while (await page.evaluate(() => document.scrollingElement.scrollTop + window.innerHeight < document.scrollingElement.scrollHeight)) {

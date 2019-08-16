@@ -1,13 +1,18 @@
 import puppeteer from 'puppeteer';
 
 const browser = async (config) => {
-  const data = config;
+  const data = {
+    members: false,
+    posts: false,
+    ...config
+  };
   const browser = await puppeteer.launch({
     headless: true,
     args: ['--disable-notifications', '--start-maximized'],
   });
   const page = await browser.newPage();
-  page.on('console', (log) => console[log._type](log._text));
+  
+  data.debug && page.on('console', (log) => console[log._type](log._text));
   page.getBrowser = () => browser;
 
   return {

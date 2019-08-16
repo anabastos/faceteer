@@ -32,26 +32,26 @@ const {
 } = actions
  
 const login = async (browser) => {
-  debug('Logging you in under your credentials...')
+  debug('Logging you in under your credentials...\n')
   const page = browser.page;
   await page.goto(url, { waitUntil: 'load' });
-
   await focusSelector(page, loginSelectors.userForm);
   await writeForm(page, loginSelectors.userForm, browser.data.username);
   await focusSelector(page, loginSelectors.passForm);
   await writeForm(page, loginSelectors.passForm, browser.data.password);
   
   await clickButton(page, loginSelectors.loginButton);
-  await page.waitForNavigation({ waitUntil: 'networkidle2' });
+  await page.waitForNavigation({ timeout: 1000000, waitUntil: 'load' });
   await page.screenshot({
     path: 'login.png',
     fullPage: true
   });
+  success('Done!\n')
   return browser;
 };
 
-const getPostData = async (page, groupIds) => {
-  const posts = groupIds.map(async id => {
+const getPostData = async (page, postsIds) => {
+  const posts = postsIds.map(async id => {
     if (typeof id === 'string') {
       const selector = groupSelectors.groupPostDiv(id);
       return page.evaluate((selector, postSelectors) => {
@@ -185,14 +185,19 @@ const getUserData = async (browser, id = '') => {
     return nameSelector && nameSelector.textContent;
   }, profileSelectors);
 
+  const posts = browser.data && browser.data.posts
+    ? await getUserPostsData(browser, id)
+    : {}
+
   return {
     ...relationshipData,
     ...contactData,
     ...livingData,
     ...educationData,
+    ...posts,
     name,
     age: contactData['Data de nascimento'] && contactData['Data de nascimento'].length > 4
-      ? getAge(contactData['Ano de nascimento'])
+      ? getAge(contactData['Data de nascimento'])
       : null
   }
 }
@@ -201,7 +206,6 @@ const getMembersData = async (browser, groupUrl) => {
   const page = browser.page;
   await page.goto(`${groupUrl}/members/`, { waitUntil: 'load' });
   await scrollToBottom(page);
-
   const membersLinks = await page.evaluate((groupSelectors) => {
     const memberImg = document.querySelectorAll(groupSelectors.memberListName);
     const memberImgExtended = document.querySelectorAll(groupSelectors.memberListNameExtended);
@@ -223,6 +227,21 @@ const getMembersData = async (browser, groupUrl) => {
     membersData.push(memberData);
   }
   return membersData;
+}
+
+const getUserPostsData = async (browser, personId) => {
+  const page = browser.page;
+  const personFeedUrl = `${url}/${personId}`;
+  await page.goto(personFeedUrl, { waitUntil: 'load' });
+
+  // await scrollToBottom(page);
+  await clickAllButtons(page, postSelectors.moreCommentsButton);
+  await page.waitFor(3000);
+
+  await page.screenshot({
+    path: 'person.png',
+    fullPage: true
+  });
 }
 
 const getGroupData = async (browser) => {
@@ -248,22 +267,25 @@ const getGroupData = async (browser) => {
     ...postArticleIds,
     ...postFeedIds,
   ]
-  debug('Getting the posts data...')
+  debug('Getting the posts data...\n')
   const posts = await getPostData(page, groupPostIds);
-  debug('Getting members data...')
-  const members = await getMembersData(browser, groupUrl);
+  debug('Getting members data...\n')
+  
+  const membersData = browser.data && browser.data.members
+    ? { members: await getMembersData(browser, groupUrl)}
+    : {}
   return {
     posts,
-    members,
+    ...membersData,
   }
 };
 
-const saveAsJson = async (posts) => {
+const saveAsJson = async (obj) => {
   debug('Saving data as json!')
   const write = util.promisify(fs.writeFile);
-  await write('data.json', JSON.stringify(posts), 'utf8');
+  await write('data.json', JSON.stringify(obj), 'utf8');
   success('Saved as data.json!');
-  return posts
+  return obj
 };
 
 export {
