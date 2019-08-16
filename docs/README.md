@@ -1,10 +1,11 @@
-![Faceteer Logo](logo.png)
+## Faceteer 
 
 Facebook scrapper using puppeter
 
 ### Why?
 - Researches about comportament of users
 - Track usual content of a group
+- Stalking?
 
 ### Install
 
@@ -17,4 +18,4 @@ $ npm install --global faceteer
 faceteer login email@test.com password
 ```
 
-### [More commands](#commands)
+### [More commands](commands.md)
