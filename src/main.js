@@ -1,10 +1,10 @@
 import fs from 'fs';
 import util from 'util';
-import { TimeoutError } from 'puppeteer/Errors';
 
 import elements from './helpers/elements';
 import options from './helpers/options';
 import getAge from './helpers/dateUtil';
+import actions from './helpers/actions'
 import { error, debug, success } from './helpers/logs';
 
 const { ptBr } = options;
@@ -15,67 +15,33 @@ const {
 
 const {
   url,
-  userForm,
-  passForm,
-  loginButton,
-  postSelector,
-  postFeedSelector,
-  argumentSelector,
-  groupPostDiv,
+  loginSelectors,
   groupSelectors,
   profileSelectors,
+  postSelectors,
 } = elements;
 
-const focusSelector = async (page, element) => {
-  try {
-    await page.waitForSelsector(element);
-    await page.focus(element);
-  } catch (e) {
-    if (e instanceof TimeoutError) {
-      await page.waitForSelector(element);
-      await page.evaluate(argumentSelector, element);
-    } 
-  }
-  return page;
-}
-
-const writeForm = async (page, element, input) => {
-  try {
-    await page.type(element, input);
-  } catch (e) {
-    if (e instanceof TimeoutError) {
-      await page.waitForSelector(element);
-      await page.evaluate(argumentSelector, element);
-      await page.type(element, input);
-    }
-  }
-  return page;
-}
-
-const clickButton = async (page, element) => {
-  try {
-    await page.click(element);
-  } catch (e) {
-    if (e instanceof TimeoutError) {
-      await page.waitForSelector(element);
-      await page.evaluate(argumentSelector, element);
-      await page.click(element);
-    }
-  }
-  return page;
-}
-
+const {
+  focusSelector,
+  writeForm,
+  clickButton,
+  scrollToBottom,
+  clickAllButtons,
+  getKeyValueObjBySelector,
+  getObjBySelectorWithDivider,
+} = actions
+ 
 const login = async (browser) => {
   debug('Logging you in under your credentials...')
   const page = browser.page;
   await page.goto(url, { waitUntil: 'load' });
 
-  await focusSelector(page, userForm);
-  await writeForm(page, userForm, browser.data.username);
-  await focusSelector(page, passForm);
-  await writeForm(page, passForm, browser.data.password);
+  await focusSelector(page, loginSelectors.userForm);
+  await writeForm(page, loginSelectors.userForm, browser.data.username);
+  await focusSelector(page, loginSelectors.passForm);
+  await writeForm(page, loginSelectors.passForm, browser.data.password);
   
-  await clickButton(page, loginButton);
+  await clickButton(page, loginSelectors.loginButton);
   await page.waitForNavigation({ waitUntil: 'networkidle2' });
   await page.screenshot({
     path: 'login.png',
@@ -84,49 +50,30 @@ const login = async (browser) => {
   return browser;
 };
 
-const scrollToBottom = async (page) => {
-  debug('Scrolling the facebook group...\n this might take a while!')
-  const distance = 100; // should be less than or equal to window.innerHeight
-  const delay = 100;
-  while (await page.evaluate(() => document.scrollingElement.scrollTop + window.innerHeight < document.scrollingElement.scrollHeight)) {
-    await page.evaluate((y) => {
-      document.scrollingElement.scrollBy(0, y);
-    }, distance);
-    await page.waitFor(delay);
-  }
-};
-
-const clickAllButtons = async (page, element) => {
-  return page.evaluate((selector) => {
-    const elements = document.querySelectorAll(selector);
-    return Promise.all(Array.prototype.map.call(elements, e => e.click()));
-  }, element)
-}
-
 const getPostData = async (page, groupIds) => {
   const posts = groupIds.map(async id => {
     if (typeof id === 'string') {
-      const selector = groupPostDiv(id);
-      return page.evaluate((selector, groupSelectors) => {
+      const selector = groupSelectors.groupPostDiv(id);
+      return page.evaluate((selector, postSelectors) => {
         const getText = (div) => {
 
-          const bigText = div.querySelector(groupSelectors.postBigText)
-            ? div.querySelector(groupSelectors.postBigText).textContent
+          const bigText = div.querySelector(postSelectors.postBigText)
+            ? div.querySelector(postSelectors.postBigText).textContent
             : ''
-          const text = div.querySelector(groupSelectors.postText)
-            ? div.querySelector(groupSelectors.postText).textContent
+          const text = div.querySelector(postSelectors.postText)
+            ? div.querySelector(postSelectors.postText).textContent
             : ''
 
-          const img = div.querySelector(groupSelectors.postImg)
-            && div.querySelector(groupSelectors.postImg).getAttribute('src')
-          const linkImg = div.querySelector(groupSelectors.postLinkImg)
-          && div.querySelector(groupSelectors.postLinkImg).getAttribute('src')
+          const img = div.querySelector(postSelectors.postImg)
+            && div.querySelector(postSelectors.postImg).getAttribute('src')
+          const linkImg = div.querySelector(postSelectors.postLinkImg)
+          && div.querySelector(postSelectors.postLinkImg).getAttribute('src')
 
-          const link = div.querySelector(groupSelectors.postLink)
-          && div.querySelector(groupSelectors.postLink).getAttribute('href')
+          const link = div.querySelector(postSelectors.postLink)
+          && div.querySelector(postSelectors.postLink).getAttribute('href')
 
-          const author = div.querySelector(groupSelectors.postsAuthor);
-          const date = div.querySelector(groupSelectors.postDate)
+          const author = div.querySelector(postSelectors.postsAuthor);
+          const date = div.querySelector(postSelectors.postDate)
           return {
             op: author && author.textContent,
             date: date && date.textContent,
@@ -136,7 +83,7 @@ const getPostData = async (page, groupIds) => {
           };
         };
         const getComments = (div) => {
-          const commentSpans = div.querySelectorAll(groupSelectors.commentText);
+          const commentSpans = div.querySelectorAll(postSelectors.commentText);
           return Array.prototype.map.call(commentSpans, el => el && el.textContent);
         };
 
@@ -150,25 +97,11 @@ const getPostData = async (page, groupIds) => {
           post: getText(postDiv),
           comments: getComments(commentDiv),
         };
-      }, selector, groupSelectors);
+      }, selector, postSelectors);
     }
   });
   return Promise.all(posts)
 };
-
-const getKeyValueObjBySelector = (page, key, value) => {
-  return page.evaluate((key, value) => {
-    const selectorKey = document.querySelectorAll(key)
-    const listKeys = Array.prototype.map.call(selectorKey, el => el && el.textContent);
-    const selectorValue = document.querySelectorAll(value)
-    const listValues = Array.prototype.map.call(selectorValue, el => el && el.textContent);
-
-    return listKeys.reduce((acc, item, index) => {
-      acc[item] = listValues[index];
-      return acc;
-    }, {});
-  }, key, value);
-}
 
 const getUserData = async (browser, id = '') => {
   const page = browser.page;
@@ -179,10 +112,6 @@ const getUserData = async (browser, id = '') => {
 
   const profileRelationship = `${profileUrl}/about?section=relationship`
   await page.goto(profileRelationship, { timeout: 1000000, waitUntil: 'load' });
-  await page.screenshot({
-    path: `person${id}.png`,
-    fullPage: true
-  });
 
   await page.evaluate((romanticRelations) => {
     window.getRelationshipData = (text) => {
@@ -198,14 +127,14 @@ const getUserData = async (browser, id = '') => {
         personName: textSplitted[0],
       });
     }
-
+  
     window.splitText = (possibleList, text) => possibleList.reduce((acc, item) => {
       const name = text.substring(0, text.search(item));
       return text.includes(item)
         ? [name, item]
         : acc;
     }, [])
-
+  
     window.getFamilyRelationshipData = (relations, familyRelations) => {
       return relations.map((text) => {
         const textSplitted = splitText(familyRelations, text);
@@ -215,7 +144,7 @@ const getUserData = async (browser, id = '') => {
         }
       })
     }
-  }, familyRelations, romanticRelations);
+  }, romanticRelations);
 
   const relationshipData = await page.evaluate((profileSelectors, familyRelations) => {
     const romanticRelationshipSelector = document.querySelector(profileSelectors.relashionShip)
@@ -232,7 +161,10 @@ const getUserData = async (browser, id = '') => {
 
   const profileContact = `${profileUrl}/about?section=contact-info`
   await page.goto(profileContact, { timeout: 1000000, waitUntil: 'load' });
-  const contactData = await getKeyValueObjBySelector(page, profileSelectors.contactInfoIndex, profileSelectors.contactInfoValue)
+  const contactsList = await getKeyValueObjBySelector(page, profileSelectors.contactInfoIndex, profileSelectors.contactInfoValue)
+  const contactData = {
+    basicInfo: contactsList,
+  }
 
   const profileLiving = `${profileUrl}/about?section=living`
   await page.goto(profileLiving, { timeout: 1000000, waitUntil: 'load' });
@@ -240,17 +172,18 @@ const getUserData = async (browser, id = '') => {
 
   const profileEducation = `${profileUrl}/about?section=education`
   await page.goto(profileEducation, { timeout: 1000000, waitUntil: 'load' });
-  const educationData = await getKeyValueObjBySelector(page, profileSelectors.educationIndex, profileSelectors.educationValue)
+  
+  const listOfExperience = await getObjBySelectorWithDivider(page, profileSelectors.educationLists, profileSelectors.educationIndex, profileSelectors.educationValue)
+  const educationData = {
+    work: listOfExperience[0],
+    skills: listOfExperience[1],
+    education: listOfExperience[2],
+  }
 
   const name = await page.evaluate((profileSelectors) => {
     const nameSelector = document.querySelector(profileSelectors.name)
     return nameSelector && nameSelector.textContent;
   }, profileSelectors);
-
-  await page.screenshot({
-    path: 'person.png',
-    fullPage: true
-  });
 
   return {
     ...relationshipData,
@@ -259,7 +192,7 @@ const getUserData = async (browser, id = '') => {
     ...educationData,
     name,
     age: contactData['Data de nascimento'] && contactData['Data de nascimento'].length > 4
-      ? getAge(contactData['Data de nascimento'])
+      ? getAge(contactData['Ano de nascimento'])
       : null
   }
 }
@@ -268,10 +201,7 @@ const getMembersData = async (browser, groupUrl) => {
   const page = browser.page;
   await page.goto(`${groupUrl}/members/`, { waitUntil: 'load' });
   await scrollToBottom(page);
-  await page.screenshot({
-    path: 'groupmembers.png',
-    fullPage: true
-  });
+
   const membersLinks = await page.evaluate((groupSelectors) => {
     const memberImg = document.querySelectorAll(groupSelectors.memberListName);
     const memberImgExtended = document.querySelectorAll(groupSelectors.memberListNameExtended);
@@ -301,15 +231,11 @@ const getGroupData = async (browser) => {
   await page.goto(groupUrl, { waitUntil: 'load' });
 
   await scrollToBottom(page);
-  await clickAllButtons(page, groupSelectors.moreCommentsButton);
+  await clickAllButtons(page, postSelectors.moreCommentsButton);
   await page.waitFor(3000);
-  await page.screenshot({
-    path: 'groupfeed.png',
-    fullPage: true
-  });
 
-  const postValues = await page.$$eval(postSelector, e => e);
-  const postFeedValues = await page.$$eval(postFeedSelector, e => e);
+  const postValues = await page.$$eval(groupSelectors.postSelector, e => e);
+  const postFeedValues = await page.$$eval(groupSelectors.postFeedSelector, e => e);
   const getIdOfSelector = item => JSON.parse(item.__FB_STORE['data-ft'])['mf_story_key'];
   const postArticleIds = postValues.map(getIdOfSelector)
   const postFeedIds = postFeedValues.map(getIdOfSelector)
@@ -343,6 +269,8 @@ const saveAsJson = async (posts) => {
 export {
   login,
   getGroupData,
+  getMembersData,
   getUserData,
+  getPostData,
   saveAsJson,
 };

@@ -1,6 +1,6 @@
 import prog from 'caporal';
 
-import scrap from './helpers/scrap';
+import scrap from './entities/scrap';
 
 const pkg = require('../package.json');
 
