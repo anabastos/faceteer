@@ -6,29 +6,39 @@ Facebook scrapper using puppeter
 ### Why?
 - Researches about comportament of users
 - Track usual content of a group
+- Stalking?
 
 ### Install
 
 ```bash
-$ npm install --global pup-facebook-group
+$ npm install --global faceteer
 ```
 
-### Commands
+#### Scrape profile data 
 ```
-pfg email@test.com password groupId
+faceteer profile email@test.com password profileId
 ```
 
-Uses natural language to analyse group content and creates a report with pretty charts <3
+#### Scrape group data
+```
+faceteer group email@test.com password groupId
+```
 
-```
-pfg email@test.com password groupId --report
-```
+### [More Commands](http://anabastos.me/faceteer/#/)
 
 #### TODO
 
+### v.1
 - [ ] get profile life events
+- [ ] english and ptbr
+- [ ] complete(including posts) and simple user scrap
+- [ ] get posts reactions
 - [ ] fix profile relationships
-- [ ] complete and simple user scrap
-- [ ] logger
 - [ ] data analysis
 - [ ] chart generation
+
+### Future features
+- Get profile pictures and reactions
+- Get profile groups, events and page likes
+- Get page posts, comments and reactions
+- Get event data

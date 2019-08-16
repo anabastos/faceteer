@@ -4,12 +4,29 @@ import scrap from './entities/scrap';
 
 const pkg = require('../package.json');
 
-const init = async (config) => {
-  const scrapper = await scrap(config);
+const initScrap = (args, options) => {
+  const config = {
+    ...args,
+    ...options,
+  }
+  return scrap(config);
+};
+
+const getUserCommand = (args, options) => {
+  const scrapper = await initScrap(args, options);
   try {
-    // await scrapper.login()
-    await scrapper.getPosts()
-    // await scrapper.getUser()
+    await scrapper.login()
+    await scrapper.getUser()
+  } catch (e) {
+    throw `Error trying to scrape: ${e}`;
+  }
+};
+
+const getGroupCommand = (args, options) => {
+  const scrapper = await initScrap(args, options);
+  try {
+    await scrapper.login()
+    await scrapper.getGroup()
   } catch (e) {
     throw `Error trying to scrape: ${e}`;
   }
@@ -17,15 +34,24 @@ const init = async (config) => {
 
 prog
   .version(pkg.version)
-  .description('Facebook Scrapper!')
-  .command('pfg', 'Pup facebook group')
+  .description('Facebook Group Scrapper!')
+  .command('group', 'Scrape facebook group data')
+  .alias('g')
   .argument('<username>', 'Facebook Username')
   .argument('<password>', 'Facebook Password')
-  // .argument('<personId>', 'Profile id')
   .argument('<groupId>', 'Facebook Group id')
-  .option('--tail <lines>', 'Tail <lines> lines of logs after deploy', prog.INT)
-  .action((args) => {
-    init(args);
+  .option('--members <members>', 'If it should get group <members> data. Default is false.', prog.BOOL)
+  .action((args, options) => {
+    getGroupCommand(args, options);
+  })
+  .command('profile', 'Scrape facebook profile data')
+  .alias('p')
+  .argument('<username>', 'Facebook Username')
+  .argument('<password>', 'Facebook Password')
+  .argument('<personId>', 'Facebook Profile id or username')
+  .option('--posts <posts>', 'If it should include <posts> data. Default is false.', prog.BOOL)
+  .action((args, options) => {
+    getUserCommand(args, options);
   });
 
 prog.parse(process.argv);

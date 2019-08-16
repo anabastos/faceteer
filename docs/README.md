@@ -14,14 +14,7 @@ $ npm install --global faceteer
 
 ### Commands
 ```
-pfg email@test.com password groupId
+faceteer login email@test.com password
 ```
 
-#### TODO
-
-- [ ] get profile life events
-- [ ] fix profile relationships
-- [ ] support ptbr and english
-- [ ] complete and simple user scrap
-- [ ] data analysis
-- [ ] chart generation
+### [More commands](#commands)

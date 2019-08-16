@@ -17,6 +17,7 @@ export default {
     attachedImg: 'div.fbStoryAttachmentImage',
     commentText: 'span[class=\'_3l3x\'] > span',
     moreCommentsButton: 'div[class=\'_4sxd\']',
+    postFeed: 'div._5pcb',
   },
   groupSelectors: {
     postFeedSelector: 'div[role=\'feed\'] > div[role=\'article\']',

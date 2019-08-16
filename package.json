@@ -8,6 +8,9 @@
   "name": "faceteer",
   "description": "Facebook scrapper using puppeter",
   "version": "1.0.0",
+  "bin": {
+    "faceteer": "index.js"
+  },
   "main": "src/index.js",
   "devDependencies": {
     "@babel/cli": "7.5.5",

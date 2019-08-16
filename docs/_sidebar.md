@@ -1,4 +1,5 @@
 <!-- docs/_sidebar.md -->
 
 * [Home](/)
-* [Docs](docs.md)
+* [Commands](commands.md)
+<!-- * [Analysis](analysis.md) -->

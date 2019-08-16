@@ -14,7 +14,7 @@ const scrap = async (config) => {
   const doLogin = pipeP(
     login,
   )
-  const getPosts = pipeP(
+  const getGroup = pipeP(
     login,
     getGroupData,
     saveAsJson,
@@ -33,9 +33,9 @@ const scrap = async (config) => {
         throw `Could not login \n ${e}`
       }
     },
-    getPosts: async () => {
+    getGroup: async () => {
       try {
-        await getPosts(browser);
+        await getGroup(browser);
         browser.close()
       } catch (e) {
         throw `Could not getPosts \n ${e}`
