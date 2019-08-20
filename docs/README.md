@@ -3,8 +3,8 @@
 Facebook scrapper using puppeter
 
 ### Why?
-- Researches about comportament of users
-- Track usual content of a group
+- Researches about user behavior
+- Group content tracking
 - Stalking?
 
 ### Install

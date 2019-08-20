@@ -4,8 +4,8 @@
 Facebook scrapper using puppeter
 
 ### Why?
-- Researches about comportament of users
-- Track usual content of a group
+- Researches about user behavior
+- Group content tracking
 - Stalking?
 
 ### Install
@@ -14,6 +14,7 @@ Facebook scrapper using puppeter
 $ npm install --global faceteer
 ```
 
+## Scraping
 #### Scrape profile data 
 ```
 faceteer profile email@test.com password profileId
@@ -22,6 +23,12 @@ faceteer profile email@test.com password profileId
 #### Scrape group data
 ```
 faceteer group email@test.com password groupId
+```
+
+## Analysis
+#### Get group analysis
+```
+faceteer analyze email@test.com password groupId
 ```
 
 ### [More Commands](http://anabastos.me/faceteer/#/)
