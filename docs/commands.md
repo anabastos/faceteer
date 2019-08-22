@@ -99,6 +99,23 @@ Sample of generated data.json
 }
 ```
 
+### Get facebook group members data
+The command `groupmembers` will scrape the group members data.
+The command will generate a data.json including all the scraped data.
+
+```
+faceteer groupmembers email@test.com password groupId
+```
+you can also use the `gm` alias:
+```
+faceteer gm email@test.com password groupId
+```
+
+Sample of generated data.json
+```json
+[{"romanticRelationship":null,"familyRelationship":[],"basicInfo":{},"name":null,"age":null},]
+```
+
 ## Pages
 TODO
 
